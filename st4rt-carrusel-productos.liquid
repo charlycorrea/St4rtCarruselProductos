@@ -35,6 +35,7 @@
   data-section-id="{{ sid }}"
   data-autoplay="{{ section.settings.autoplay }}"
   data-autoplay-seconds="{{ section.settings.autoplay_seconds }}"
+  data-loop="{{ section.settings.loop_slides }}"
   data-dots="{{ section.settings.show_dots }}"
   data-arrows="{{ section.settings.show_arrows }}"
   data-reduced-motion="{{ section.settings.reduce_motion }}"
@@ -96,11 +97,17 @@
 >
   <div class="st4rt-hero__wrap {% unless full_width %}page-width{% endunless %}">
     <div class="st4rt-hero__viewport">
-      <div class="st4rt-hero__track" role="region" aria-label="Carrusel de productos">
+      <div
+        id="st4rt-hero-track-{{ sid }}"
+        class="st4rt-hero__track"
+        role="region"
+        aria-label="Carrusel de productos destacados"
+      >
         {% for block in section.blocks %}
           {% liquid
             assign b = block
             assign bg = b.settings.bg_image
+            assign bgfx = b.settings.bgfx_image
 
             assign pack_d = b.settings.pack_image_desktop
             assign pack_m = b.settings.pack_image_mobile
@@ -121,6 +128,7 @@
           <article
             class="st4rt-hero__slide"
             data-slide
+            aria-label="Slide {{ forloop.index }} de {{ section.blocks.size }}"
             {% if product != blank %}
               data-product-url="{{ product.url | escape }}"
             {% endif %}
@@ -150,21 +158,40 @@
               {% if bg != blank %}
                 --st4rt-bg-url: url('{{ bg | image_url: width: 2400 }}');
               {% endif %}
+              {% if bgfx != blank %}
+                --st4rt-bgfx-url: url('{{ bgfx | image_url: width: 1200 }}');
+              {% elsif bg != blank %}
+                --st4rt-bgfx-url: url('{{ bg | image_url: width: 1200 }}');
+              {% endif %}
             "
             {{ block.shopify_attributes }}
           >
             <div class="st4rt-hero__bg">
               {% if bg != blank %}
-                {{
-                  bg
-                  | image_url: width: 2400
-                  | image_tag:
-                    loading: 'lazy',
-                    decoding: 'async',
-                    sizes: '100vw',
-                    widths: '800,1200,1600,2000,2400',
-                    alt: ''
-                }}
+                {% if forloop.first %}
+                  {{
+                    bg
+                    | image_url: width: 2400
+                    | image_tag:
+                      loading: 'eager',
+                      fetchpriority: 'high',
+                      decoding: 'async',
+                      sizes: '100vw',
+                      widths: '800,1200,1600,2000,2400',
+                      alt: ''
+                  }}
+                {% else %}
+                  {{
+                    bg
+                    | image_url: width: 2400
+                    | image_tag:
+                      loading: 'lazy',
+                      decoding: 'async',
+                      sizes: '100vw',
+                      widths: '800,1200,1600,2000,2400',
+                      alt: ''
+                  }}
+                {% endif %}
               {% endif %}
               <span class="st4rt-hero__overlay" aria-hidden="true"></span>
             </div>
@@ -188,17 +215,15 @@
                 {% comment %}
                   CTA (Cambio): ahora es un link a URL configurable por slide.
                   - fallback: si no hay cta_url, usa product.url (si existe).
-                  - si no hay ninguno, queda en "#".
+                  - si no hay ninguno, no se renderiza botón.
                 {% endcomment %}
-                <div class="st4rt-hero__ctas">
-                  <a
-                    class="st4rt-btn st4rt-btn--primary"
-                    href="{% if cta_url != blank %}{{ cta_url }}{% else %}#{% endif %}"
-                    {% if cta_url == blank %}aria-disabled="true"{% endif %}
-                  >
-                    {{ cta_label | escape }}
-                  </a>
-                </div>
+                {% if cta_url != blank %}
+                  <div class="st4rt-hero__ctas">
+                    <a class="st4rt-btn st4rt-btn--primary" href="{{ cta_url }}">
+                      {{ cta_label | escape }}
+                    </a>
+                  </div>
+                {% endif %}
 
                 {% if b.settings.badge_text != blank %}
                   <div class="st4rt-hero__badge">{{ b.settings.badge_text | escape }}</div>
@@ -223,7 +248,8 @@
                         srcset="{{ pack_d | image_url: width: 1600 }} 1600w, {{ pack_d | image_url: width: 1200 }} 1200w, {{ pack_d | image_url: width: 960 }} 960w, {{ pack_d | image_url: width: 720 }} 720w, {{ pack_d | image_url: width: 480 }} 480w"
                         sizes="(max-width: 749px) 90vw, 520px"
                         alt="{{ b.settings.title | escape }}"
-                        loading="lazy"
+                        loading="{% if forloop.first %}eager{% else %}lazy{% endif %}"
+                        fetchpriority="{% if forloop.first %}high{% else %}auto{% endif %}"
                         decoding="async"
                         width="{{ pack_d.width }}"
                         height="{{ pack_d.height }}"
@@ -233,7 +259,8 @@
                         class="st4rt-hero__pack-img"
                         src="{{ pack_m | image_url: width: 1200 }}"
                         alt="{{ b.settings.title | escape }}"
-                        loading="lazy"
+                        loading="{% if forloop.first %}eager{% else %}lazy{% endif %}"
+                        fetchpriority="{% if forloop.first %}high{% else %}auto{% endif %}"
                         decoding="async"
                         width="{{ pack_m.width }}"
                         height="{{ pack_m.height }}"
@@ -248,9 +275,25 @@
       </div>
 
       {% if section.settings.show_arrows %}
-        <div class="st4rt-hero__nav" aria-hidden="true">
-          <button class="st4rt-hero__arrow" type="button" data-prev aria-label="Anterior">‹</button>
-          <button class="st4rt-hero__arrow" type="button" data-next aria-label="Siguiente">›</button>
+        <div class="st4rt-hero__nav">
+          <button
+            class="st4rt-hero__arrow"
+            type="button"
+            data-prev
+            aria-controls="st4rt-hero-track-{{ sid }}"
+            aria-label="Slide anterior del carrusel"
+          >
+            ‹
+          </button>
+          <button
+            class="st4rt-hero__arrow"
+            type="button"
+            data-next
+            aria-controls="st4rt-hero-track-{{ sid }}"
+            aria-label="Siguiente slide del carrusel"
+          >
+            ›
+          </button>
         </div>
       {% endif %}
     </div>
@@ -258,6 +301,7 @@
     {% if section.settings.show_dots %}
       <div class="st4rt-hero__dots" aria-label="Paginación del carrusel"></div>
     {% endif %}
+    <p class="st4rt-hero__sr-only" data-live-status aria-live="polite" aria-atomic="true"></p>
   </div>
 </section>
 
@@ -388,6 +432,12 @@
       "type": "checkbox",
       "id": "show_arrows",
       "label": "Mostrar flechas",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "loop_slides",
+      "label": "Loop infinito",
       "default": true
     },
     {
@@ -642,6 +692,7 @@
       "name": "Slide",
       "settings": [
         { "type": "image_picker", "id": "bg_image", "label": "Imagen fondo" },
+        { "type": "image_picker", "id": "bgfx_image", "label": "Imagen preprocesada efecto (opcional)" },
         { "type": "image_picker", "id": "pack_image_desktop", "label": "Packshot desktop" },
         { "type": "image_picker", "id": "pack_image_mobile", "label": "Packshot mobile" },
 

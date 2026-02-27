@@ -72,6 +72,10 @@
   background-repeat: no-repeat;
 }
 
+.st4rt-hero__bg:empty{
+  background-image: linear-gradient(135deg, #151a22, #090b0f);
+}
+
 .st4rt-hero__bg img{
   position: absolute;
   inset: 0;
@@ -81,11 +85,9 @@
 
   transform: scale(var(--st4rt-bg-zoom, 1.06));
   opacity: var(--st4rt-bg-opacity, .85);
-  filter: blur(var(--st4rt-bg-blur, 10px)) saturate(var(--st4rt-bg-saturate, 1.05));
+  filter: blur(var(--st4rt-bg-blur, 4px)) saturate(var(--st4rt-bg-saturate, 1));
 
   transition: transform 420ms ease, opacity 420ms ease;
-  will-change: transform, opacity;
-
   display: block;
 }
 
@@ -105,10 +107,10 @@
   pointer-events: none;
 
   opacity: var(--st4rt-bgfx-opacity, .50);
-  filter: blur(var(--st4rt-bgfx-blur, 26px)) saturate(var(--st4rt-bgfx-saturate, 1.15));
+  filter: blur(var(--st4rt-bgfx-blur, 14px)) saturate(var(--st4rt-bgfx-saturate, 1.02));
   transform: scale(1.08);
 
-  background-image: var(--st4rt-bg-url);
+  background-image: var(--st4rt-bgfx-url, var(--st4rt-bg-url));
   background-position: center;
   background-size: cover;
   background-repeat: no-repeat;
@@ -216,7 +218,6 @@
 
 .st4rt-hero__pack-inner{
   width: 100%;
-  will-change: transform, opacity;
   opacity: 0;
   transform: translate(
     calc(var(--st4rt-pack-x-d, 0) * 1%),
@@ -231,9 +232,14 @@
   max-height: calc(var(--st4rt-hero-h-d, 640px) * .86);
   object-fit: contain;
   transform-origin: center;
-  will-change: transform;
   transform: scale(var(--st4rt-pack-s-d, 1));
   transition: transform 520ms ease;
+}
+
+.st4rt-hero.is-animating .st4rt-hero__bg img,
+.st4rt-hero.is-animating .st4rt-hero__pack-inner,
+.st4rt-hero.is-animating .st4rt-hero__pack-img{
+  will-change: transform, opacity;
 }
 
 .st4rt-hero__slide.is-active.is-inview .st4rt-hero__pack-inner{ opacity: 1; }
@@ -333,6 +339,26 @@
 .st4rt-hero .st4rt-btn:active,
 .st4rt-hero__slide .st4rt-btn:active{
   transform: translateY(0);
+}
+
+.st4rt-btn:focus-visible,
+.st4rt-hero__arrow:focus-visible,
+.st4rt-hero__dot:focus-visible{
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(216, 242, 19, .35);
+}
+
+.st4rt-hero__sr-only{
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .st4rt-btn--secondary{
